@@ -5,58 +5,49 @@ const fs = require("fs");
 const path = require("path");
 const Jimp = require("jimp");
 
-let photoArray = getCsvArray().slice(-100);
+let photoArray = getCsvArray().slice(1);
 // console.log(photoArray[0]);
 let numberOfReadable = 0;
 
 fs.writeFile(path.resolve(__dirname, "data", "pixels.json"), "[", (err) => {
   return false;
 });
-fs.wr;
+getImagePixels(numberOfReadable);
 
-for (let i = 0; i < photoArray.length; i++) {
-  let ans = {
-    class: photoArray[i][1],
-    pixels: [],
-  };
+function getImagePixels(i) {
   Jimp.read(
     path.resolve(__dirname, "train", "train", "images", photoArray[i][0])
   )
     .then((image) => {
+      let ans = {
+        class: photoArray[i][1],
+        pixels: [],
+      };
       for (let i = 0; i < 480; i++) {
         for (let j = 0; j < 480; j++) {
           let color = Jimp.intToRGBA(image.getPixelColor(i, j));
           ans.pixels.push([color.r, color.g, color.b]);
         }
       }
-      fs.appendFile(
+      fs.appendFileSync(
         path.resolve(__dirname, "data", "pixels.json"),
-        JSON.stringify(ans),
-        () => {
-          return false;
-        }
+        JSON.stringify(ans)
       );
-      numberOfReadable++;
       console.log(`Файл считан ${i}: ${photoArray[i][0]}`);
-      checkRead();
+
+      if (i >= photoArray.length - 1) {
+        fs.appendFileSync(path.resolve(__dirname, "data", "pixels.json"), "]");
+        afterRead();
+      } else {
+        fs.appendFileSync(path.resolve(__dirname, "data", "pixels.json"), ",");
+        getImagePixels(++i);
+      }
     })
     .catch((err) => {
       console.log(err);
     });
 }
 
-function checkRead() {
-  if (numberOfReadable >= photoArray.length) {
-    fs.appendFile(path.resolve(__dirname, "data", "pixels.json"), "]", () => {
-      return false;
-    });
-    afterRead();
-  } else {
-    fs.appendFile(path.resolve(__dirname, "data", "pixels.json"), ",", () => {
-      return false;
-    });
-  }
-}
 function afterRead() {
   console.log("Готово");
 }
